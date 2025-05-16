@@ -5,4 +5,8 @@ export class AppService {
   getHello(): string {
     return 'hello hugo';
   }
+
+  getAuth(): string {
+    return 'page authentification';
+  }
 }
