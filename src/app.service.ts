@@ -9,4 +9,8 @@ export class AppService {
   getAuth(): string {
     return 'page authentification';
   }
+
+  postAuth(): string {
+    return 'page authentification avec methode post';
+  }
 }
