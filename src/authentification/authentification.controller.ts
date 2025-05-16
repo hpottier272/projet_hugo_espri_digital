@@ -1,5 +1,6 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param} from '@nestjs/common';
 import { AuthentificationService } from './authentification.service';
+import { CreateUserDto } from './dto/createUser.dto';
 
 @Controller('auth/')
 export class AuthentificationController {
@@ -10,8 +11,15 @@ export class AuthentificationController {
     return this.authentificationService.getAuth();
   }
 
-  @Post()
-  postAuth(): string {
-    return this.authentificationService.postAuth();
+  @Get(':username')
+  findOne(@Param('username') name: string) {
+    return this.authentificationService.getuser(name);
   }
+
+  @Post()
+  async create(@Body() createUserDto: CreateUserDto): Promise<string> {
+    return this.authentificationService.postAuth(createUserDto);
+  }
+
+
 }
