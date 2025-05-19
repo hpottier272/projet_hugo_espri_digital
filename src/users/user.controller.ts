@@ -21,5 +21,10 @@ export class UserController {
         async create(@Body() createUserDto: CreateUserDto):Promise<string> {
             return this.userService.createUser(createUserDto);
         }
-
+/*
+        @Post()
+        async remove(@Body() id: number) {
+            return this.userService.remove(id);
+        }
+*/
 }

@@ -26,7 +26,7 @@ export class UserService {
   async createUser(createUserDto : CreateUserDto): Promise<string> {
     const user = this.usersRepository.create(createUserDto);
     this.usersRepository.save(user);
-    return 'utilisateur : ' + createUserDto.firstName + createUserDto.lastName + ' cree avec succes';
+    return 'utilisateur : ' + createUserDto.firstName + ' ' + createUserDto.lastName + ' cree avec succes';
   }
 
 }

@@ -11,4 +11,10 @@ export class User {
   
   @Column()
   lastName: string;
+
+  @Column()
+  userName: string;
+  
+  @Column()
+  password: string;
 }

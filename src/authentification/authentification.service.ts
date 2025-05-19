@@ -12,7 +12,7 @@ export class AuthentificationService {
   }
 
   postAuth(createUserDto: CreateUserDto): string {
-    return 'bonjour, ' + createUserDto.userName + ' '+ createUserDto.mdp;
+    return 'bonjour, ' + createUserDto.userName + ' '+ createUserDto.password;
   }
   
 }
