@@ -4,8 +4,8 @@ import { AppService } from './app.service';
 import { AuthentificationModule } from './authentification/authentification.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { User } from './users/user.entity';
 import { UserModule } from './users/user.module';
+import { User } from './users/user.entity';
 
 @Module({
   imports: [
@@ -21,7 +21,7 @@ import { UserModule } from './users/user.module';
         entities: [User],
         synchronize: true, 
         retryAttempts : 3,
-        retryDelay : 3000000,
+        retryDelay : 3000,
         autoLoadEntities: true,
     }), 
   ],
