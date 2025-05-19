@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto';
 
 @Injectable()
-export class AuthentificationService {
+export class DecouverteService {
   getAuth(): string {
-    return 'page authentification avec GET';
+    return 'page decouverte avec GET';
   }
   
   getuser(name: string): string {

@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController} from './app.controller';
 import { AppService } from './app.service';
-import { AuthentificationModule } from './authentification/authentification.module';
+import { AuthentificationModule } from './decouverte/decouverte.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { UserModule } from './users/user.module';
 import { User } from './users/user.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { User } from './users/user.entity';
         retryAttempts : 3,
         retryDelay : 3000,
         autoLoadEntities: true,
-    }), 
+    }),
+    AuthModule, 
   ],
   controllers: [AppController],
   providers: [AppService],
