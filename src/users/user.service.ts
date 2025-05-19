@@ -1,14 +1,14 @@
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from './user.entity';
+import { CreateUserDto } from './dto/createUser.dto';
 
 @Injectable()
 export class UserService {
   constructor(@InjectRepository(User) 
-                private usersRepository: Repository<User>,
-                private dataSource: DataSource
+                private usersRepository: Repository<User>
             ) {}
 
   findAll(): Promise<User[]> {
@@ -23,23 +23,10 @@ export class UserService {
     await this.usersRepository.delete(id);
   }
 
-  async createMany(users: User[]) {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    
-    try {
-      await queryRunner.manager.save(users[0]);
-      await queryRunner.manager.save(users[1]);
-      await queryRunner.commitTransaction();
-    } 
-    catch (err) {
-      await queryRunner.rollbackTransaction();
-    }
-    finally {
-      await queryRunner.release();
-    }
+  async createUser(createUserDto : CreateUserDto): Promise<string> {
+    const user = this.usersRepository.create(createUserDto);
+    this.usersRepository.save(user);
+    return 'utilisateur : ' + createUserDto.firstName + createUserDto.lastName + ' cree avec succes';
   }
-  
+
 }
