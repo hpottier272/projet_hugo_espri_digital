@@ -17,4 +17,10 @@ export class User {
   
   @Column()
   password: string;
+
+  @Column()
+  tel: string;
+
+  @Column({default: null})
+  token: string;
 }
