@@ -16,13 +16,13 @@ export class AuthController {
   @Post('loginOne')
   async signInOneAuth(@Body() signInOneAuthDto: SignInOneAuthDto): Promise<string> {
     const code = await this.authService.signInOneAuth(signInOneAuthDto.userName, signInOneAuthDto.password);
-    return 'acces numero 1 autorise code : '+ code;
+    return 'votre code reçu code : '+ code;
   }
 
   @Post('loginTwo')
   async signInTwoAuth(@Body() signInTwoAuthDto: SignInTwoAuthDto): Promise<string> {
     const token =  await this.authService.signInTwoAuth(signInTwoAuthDto.userName,signInTwoAuthDto.code );
-    return 'acces numero 2 autorise token :'+ token;
+    return 'vous êtes authentifié, voici votre token :'+ token;
   }
 
 }
