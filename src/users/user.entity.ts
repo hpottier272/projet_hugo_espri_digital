@@ -20,6 +20,9 @@ export class User {
 
   @Column()
   tel: string;
+  
+  @Column({default: null})
+  codeTempo:string;
 
   @Column({default: null})
   token: string;

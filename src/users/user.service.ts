@@ -24,6 +24,10 @@ export class UserService {
     return this.usersRepository.findOneBy({ userName });
   }
 
+  async save(user: User): Promise<User> {
+    return this.usersRepository.save(user);
+  }
+  
   async remove(id: number): Promise<void> {
     await this.usersRepository.delete(id);
   }

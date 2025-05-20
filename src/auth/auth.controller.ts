@@ -1,7 +1,8 @@
 
 import { Body, Controller, Get, Post} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignInDto } from './dto/signIn.dto';
+import { SignInOneAuthDto } from './dto/signInOneAuth.dto';
+import { SignInTwoAuthDto } from './dto/signInTwoAuth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -12,8 +13,16 @@ export class AuthController {
     return this.authService.accueilauth();
   }
 
-  @Post('login')
-    signIn(@Body() signInDto: SignInDto) {
-      return this.authService.signIn(signInDto.userName, signInDto.password);
-    }
+  @Post('loginOne')
+  async signInOneAuth(@Body() signInOneAuthDto: SignInOneAuthDto): Promise<string> {
+    const code = await this.authService.signInOneAuth(signInOneAuthDto.userName, signInOneAuthDto.password);
+    return 'acces numero 1 autorise code : '+ code;
+  }
+
+  @Post('loginTwo')
+  async signInTwoAuth(@Body() signInTwoAuthDto: SignInTwoAuthDto): Promise<string> {
+    const token =  await this.authService.signInTwoAuth(signInTwoAuthDto.userName,signInTwoAuthDto.code );
+    return 'acces numero 2 autorise token :'+ token;
+  }
+
 }

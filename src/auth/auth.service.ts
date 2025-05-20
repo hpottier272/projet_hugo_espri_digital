@@ -15,6 +15,31 @@ export class AuthService {
     return 'page d accueil de la page d authentification';
   }
 
+  async signInOneAuth(userName: string, password: string): Promise<string> {
+    const user = await this.usersService.findOneByuserName(userName);
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('mot de passe ou identifiant invalide');
+    }
+    user.codeTempo = Math.floor(100000 + Math.random() * 900000).toString(); 
+    this.usersService.save(user);
+    return user.codeTempo;
+  }
+
+
+  async signInTwoAuth(userName: string, code: string): Promise<string> {
+    const user = await this.usersService.findOneByuserName(userName);
+    if (code != user?.codeTempo) {
+      throw new UnauthorizedException('code invalide');
+    }
+    const payload = { sub: user.id };
+    user.token = await this.jwtService.signAsync(payload);
+    this.usersService.save(user);
+    return user.token;
+  }
+
+
+  /*
+
   async signIn(userName: string, password: string): Promise<{ access_token: string }> {
     const user = await this.usersService.findOneByuserName(userName);
     if (!user || !(await bcrypt.compare(password, user.password))) {
@@ -25,4 +50,9 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
     };
   }
+
+  */
+
+
+
 }
