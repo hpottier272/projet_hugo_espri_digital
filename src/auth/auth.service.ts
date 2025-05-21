@@ -21,9 +21,10 @@ export class AuthService {
       throw new UnauthorizedException('mot de passe ou identifiant invalide');
     }
     const saltOrRounds = 10;
-    user.codeTempo = await bcrypt.hash(Math.floor(100000 + Math.random() * 900000).toString(), saltOrRounds); 
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.codeTempo = await bcrypt.hash(code, saltOrRounds); 
     this.usersService.save(user);
-    return user.codeTempo;
+    return code;
   }
 
 
