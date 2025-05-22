@@ -1,8 +1,8 @@
 
 import { Body, Controller, Get, Post} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignInOneAuthDto } from './dto/signInOneAuth.dto';
-import { SignInTwoAuthDto } from './dto/signInTwoAuth.dto';
+import { SignInPassAuthDto } from './dto/signInPassAuth.dto';
+import { SignInCodeAuthDto } from './dto/signInCodeAuth.dto';
 import { Public } from './public.decorateur';
 
 @Controller('auth')
@@ -16,17 +16,17 @@ export class AuthController {
   }
 
   @Public()
-  @Post('loginOne')
-  async signInOneAuth(@Body() signInOneAuthDto: SignInOneAuthDto): Promise<string> {
-    const code = await this.authService.signInOneAuth(signInOneAuthDto.userName, signInOneAuthDto.password);
-    return 'votre code reçu code : '+ code;
+  @Post('loginPass')
+  async signInPassAuth(@Body() signInPassAuthDto: SignInPassAuthDto): Promise<string> {
+    const code = await this.authService.signInPassAuth(signInPassAuthDto.userName, signInPassAuthDto.password);
+    return code;
   }
 
   @Public()
-  @Post('loginTwo')
-  async signInTwoAuth(@Body() signInTwoAuthDto: SignInTwoAuthDto): Promise<string> {
-    const token =  await this.authService.signInTwoAuth(signInTwoAuthDto.userName,signInTwoAuthDto.code );
-    return 'vous êtes authentifié, voici votre token :'+ token;
+  @Post('loginCode')
+  async signInCodeAuth(@Body() signInCodeAuthDto: SignInCodeAuthDto): Promise<string> {
+    const token =  await this.authService.signInCodeAuth(signInCodeAuthDto.userName,signInCodeAuthDto.code );
+    return token;
   }
 
 }

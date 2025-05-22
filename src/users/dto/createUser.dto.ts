@@ -6,4 +6,5 @@ export class CreateUserDto {
     tel: string;
     codeTempo:string;
     token: string;
+    mail: string;
   }
