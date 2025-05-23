@@ -1,6 +1,6 @@
-import { CanActivate,ExecutionContext,Injectable,UnauthorizedException,} from '@nestjs/common';
+import { CanActivate,ExecutionContext,Injectable} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
+import { Request, Response} from 'express';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './public.decorateur';
 import { jwtConstants } from './constants';
@@ -23,8 +23,10 @@ export class AuthGuard implements CanActivate {
   
       const request = context.switchToHttp().getRequest<Request>();
       const token = this.extractTokenFromHeader(request);
+      const response = context.switchToHttp().getResponse<Response>();
       if (!token) {
-        throw new UnauthorizedException('vous devez etre authentifie');
+        response.status(401).json({ statusCode: 401, message: 'Authentification requise.' });
+        return false;
       }
   
       try {
@@ -32,16 +34,16 @@ export class AuthGuard implements CanActivate {
           secret: jwtConstants.secret,
         });
         request['user'] = payload;
-      } catch {
-        throw new UnauthorizedException('vous devez etre authentifie');
+      } catch (error){
+        response.status(401).json({ statusCode: 401, message: 'Token invalide ou expiré.' });
+        return false;
       }
   
       return true;
     }
-  
+
     private extractTokenFromHeader(request: Request): string | undefined {
       const [type, token] = request.headers.authorization?.split(' ') ?? [];
       return type === 'Bearer' ? token : undefined;
     }
   }
-  

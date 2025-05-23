@@ -1,10 +1,11 @@
 
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from '../users/user.service';
-import { JwtService, TokenExpiredError } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/user.entity';
 import { MailService } from 'src/mail/mail.service';
+import { ResponseDto } from './dto/response.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,64 +16,81 @@ export class AuthService {
   ) {}
 
   accueilauth(): string{
-    return 'page d accueil de la page d authentification';
+    return 'Bienvenue sur l’interface d’authentification';
   }
 
-  async signInPassAuth(userName: string, password: string): Promise<string> {
-    const user = await this.searchUserByUserName(userName);
-    if (!user || !await this.checkPassword(user,password)) {
-      throw new UnauthorizedException('mot de passe ou identifiant invalide');
+  async signInPassAuth(userName: string, password: string): Promise<ResponseDto<null>> {
+    try {
+      const user = await this.searchUserByUserName(userName);
+      if (!user || !(await this.checkPassword(user, password))) {
+        return { statusCode: 401, message: 'Identifiant ou mot de passe invalide.' };
+      }
+      const code = await this.generateCode();
+      await this.saveSecureCode(user, code);
+      await this.mailService.sendCode(user.mail, code);
+      return {
+        statusCode: 201,
+        message: 'Un code a été envoyé à votre adresse e-mail.',
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        message: 'Erreur interne : impossible de s\'authentifier',
+      };
     }
-    const code = await this.generateCode(user)
-    await this.mailService.sendCode(user.mail, code);
-    return 'votre code a etait envoye par mail';
   }
 
-  async signInCodeAuth(userName: string, code: number): Promise<string> {
-    const user = await this.searchUserByUserName(userName);
-    if (!user ||!await this.checkCode(user,code)) {
-      throw new UnauthorizedException('code invalide');
+  async signInCodeAuth(userName: string, code: number): Promise<ResponseDto<{ token: string }>> {
+    try {
+      const user = await this.searchUserByUserName(userName);
+      if (!user || !(await this.checkCode(user, code))) {
+        return { statusCode: 401, message: 'Code invalide.' };
+      }
+      const token = await this.generateToken(user);
+      await this.saveSecureToken(user, token);
+      return {
+        statusCode: 200,
+        message: 'Connexion réussie',
+        data: { token },
+      };
+    } catch (error) {
+      return {
+        statusCode: 500,
+        message: 'Erreur interne : impossible de vérifier le code.',
+      };
     }
-    if (!(await this.generateToken(user))){
-      throw new UnauthorizedException('une erreur est survenue, merci de réessayer ultérieurement');
-    }
-    return 'vous etes authentifie';
   }
   
-  async searchUserByUserName(userName: string): Promise<User|null> {
+  private async searchUserByUserName(userName: string): Promise<User|null> {
     return this.usersService.findOneByuserName(userName);
   }
 
-  async checkPassword(user: User, password: string): Promise<boolean> {
-    if (!bcrypt.compare(password, user.password)) {
-      return false;
-    }
-    return true;
+  private async checkPassword(user: User, password: string): Promise<boolean> {
+    return bcrypt.compare(password, user.password);
   }
 
-  async checkCode(user: User, code: number): Promise<boolean> {
-    if (!bcrypt.compare(code.toString(), user.codeTempo)) {
-      return false;
-    }
-    return true;
+  private async checkCode(user: User, code: number): Promise<boolean> {
+    return bcrypt.compare(code.toString(), user.codeTempo);
   }
 
-  async generateCode(user : User) : Promise<number>{
+  private async generateCode() : Promise<number>{
     const code = Math.floor(100000 + Math.random() * 900000);
-    user.codeTempo = await bcrypt.hash(code.toString(), 10);
-    this.usersService.save(user);
     return code;
   }
 
-  async generateToken(user : User) : Promise<boolean>{
-    const token = await bcrypt.hash((await this.jwtService.signAsync({ sub: user.id })), 10); //payload
-    if (!token){
-      return false;
-    }
-    user.token = token;
-    user.codeTempo = '';
+  private async saveSecureCode(user: User, code: number): Promise<void> {
+    user.codeTempo = await bcrypt.hash(code.toString(), 10);
     await this.usersService.save(user);
-    return true;
+  }
+
+  private async generateToken(user: User): Promise<string> {
+    return await this.jwtService.signAsync({ sub: user.id });
   }
   
+  private async saveSecureToken(user: User, token: string): Promise<void> {
+    user.token = await bcrypt.hash(token, 10);
+    user.codeTempo = '';
+    await this.usersService.save(user);
+  }
+
 }
