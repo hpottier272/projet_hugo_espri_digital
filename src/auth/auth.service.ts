@@ -60,6 +60,16 @@ export class AuthService {
       };
     }
   }
+
+  async logout(userName: string): Promise<ResponseDto<null>> {
+    const user = await this.searchUserByUserName(userName);
+    if (!user) {
+      return { statusCode: 404, message: 'Utilisateur non trouvé.' };
+    }
+    user.token = '';
+    await this.usersService.save(user);
+    return { statusCode: 200, message: 'Déconnexion réussie.' };
+  }
   
   private async searchUserByUserName(userName: string): Promise<User|null> {
     return this.usersService.findOneByuserName(userName);

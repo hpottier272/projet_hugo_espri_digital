@@ -6,6 +6,7 @@ import { Public } from './public.decorateur';
 import { HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseDto } from './dto/response.dto';
+import { LogoutDto } from './dto/logout.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -108,4 +109,22 @@ export class AuthController {
   async signInCodeAuth(@Body() signInCodeAuthDto: SignInCodeAuthDto): Promise<ResponseDto<{ token: string }>> {
     return this.authService.signInCodeAuth(signInCodeAuthDto.userName, signInCodeAuthDto.code);
   }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Déconnexion' })
+  @ApiResponse({
+    status: 200,
+    description: 'Déconnexion réussie',
+    schema: {
+      example: {
+        statusCode: 200,
+        message: 'Déconnexion réussie.',
+      },
+    },
+  })
+  async logout(@Body() logoutdto : LogoutDto): Promise<ResponseDto<null>> {
+    return this.authService.logout(logoutdto.userName);
+  }
+
 }
