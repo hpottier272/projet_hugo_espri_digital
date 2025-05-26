@@ -27,15 +27,15 @@ export class AuthGuard implements CanActivate {
       const request = context.switchToHttp().getRequest<Request>();
       const token = this.extractTokenFromHeader(request);
       const response = context.switchToHttp().getResponse<Response>();
+      
       if (!token) {
         response.status(401).json({ statusCode: 401, message: 'Authentification requise.' });
         return false;
       }
-  
+
       try {
         const payload = await this.jwtService.verifyAsync(token, {secret: jwtConstants.secret });
         const user = await this.usersService.findOneById(payload.sub);
-
         if (user == null){
           response.status(401).json({ statusCode: 401, message: 'utilisateur inconnu' });
           return false;

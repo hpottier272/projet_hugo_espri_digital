@@ -106,7 +106,7 @@ export class AuthController {
       },
     },
   })
-  async signInCodeAuth(@Body() signInCodeAuthDto: SignInCodeAuthDto): Promise<ResponseDto<{ token: string }>> {
+  async signInCodeAuth(@Body() signInCodeAuthDto: SignInCodeAuthDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
     return this.authService.signInCodeAuth(signInCodeAuthDto.userName, signInCodeAuthDto.code);
   }
 
@@ -125,6 +125,13 @@ export class AuthController {
   })
   async logout(@Body() logoutdto : LogoutDto): Promise<ResponseDto<null>> {
     return this.authService.logout(logoutdto.userName);
+  }
+
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() { refreshToken }: { refreshToken: string }): Promise<ResponseDto<{ accessToken: string }>> {
+    return this.authService.refresh(refreshToken);
   }
 
 }

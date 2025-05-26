@@ -27,6 +27,9 @@ export class User {
   @Column({default: null})
   token: string;
 
+  @Column({default: null})
+  refreshToken: string;
+
   @Column()
   mail: string;
 }

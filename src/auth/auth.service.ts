@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/user.entity';
 import { MailService } from 'src/mail/mail.service';
 import { ResponseDto } from './dto/response.dto';
+import { jwtConstants } from './constants';
 
 @Injectable()
 export class AuthService {
@@ -40,20 +41,27 @@ export class AuthService {
     }
   }
 
-  async signInCodeAuth(userName: string, code: number): Promise<ResponseDto<{ token: string }>> {
+  async signInCodeAuth(userName: string, code: number): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
     try {
       const user = await this.searchUserByUserName(userName);
       if (!user || !(await this.checkCode(user, code))) {
         return { statusCode: 401, message: 'Code invalide.' };
       }
+
+      const accessToken = await this.generateAccessToken(user);
+      const refreshToken = await this.generateRefreshToken(user);
+      await this.saveSecureRefreshToken(user, refreshToken);
       const token = await this.generateToken(user);
       await this.saveSecureToken(user, token);
       return {
         statusCode: 200,
         message: 'Connexion réussie',
-        data: { token },
-      };
-    } catch (error) {
+        data: {
+          accessToken,
+          refreshToken,
+        },
+      } 
+    }catch (error) {
       return {
         statusCode: 500,
         message: 'Erreur interne : impossible de vérifier le code.',
@@ -67,8 +75,53 @@ export class AuthService {
       return { statusCode: 404, message: 'Utilisateur non trouvé.' };
     }
     user.token = '';
+    user.refreshToken ='';
     await this.usersService.save(user);
     return { statusCode: 200, message: 'Déconnexion réussie.' };
+  }
+
+  async refresh(refreshToken: string): Promise<ResponseDto<{ accessToken: string }>> {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, { secret: jwtConstants.refreshSecret });
+      const user = await this.usersService.findOneById(payload.sub);
+      if (!user || !user.refreshToken) {
+        return { statusCode: 403, message: 'Accès refusé.' };
+      }
+  
+      const isMatch = await bcrypt.compare(refreshToken, user.refreshToken);
+      if (!isMatch) {
+        return { statusCode: 403, message: 'Token de rafraîchissement invalide.' };
+      }
+  
+      const newAccessToken = await this.generateAccessToken(user);
+      return {
+        statusCode: 200,
+        message: 'Nouveau token généré.',
+        data: { accessToken: newAccessToken },
+      };
+    } catch (e) {
+      return { statusCode: 403, message: 'Token invalide ou expiré.' };
+    }
+  }
+  
+  private async generateAccessToken(user: User): Promise<string> {
+    return this.jwtService.signAsync(
+      { sub: user.id },
+      { secret: jwtConstants.secret, expiresIn: '15m' }
+    );
+  }
+  
+  private async generateRefreshToken(user: User): Promise<string> {
+    return this.jwtService.signAsync(
+      { sub: user.id },
+      { secret: jwtConstants.refreshSecret, expiresIn: '7d' }
+    );
+  }
+  
+  private async saveSecureRefreshToken(user: User, refreshToken: string): Promise<void> {
+    const hashed = await bcrypt.hash(refreshToken, 10);
+    user.refreshToken = hashed;
+    await this.usersService.save(user);
   }
   
   private async searchUserByUserName(userName: string): Promise<User|null> {
