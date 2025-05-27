@@ -5,18 +5,21 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/createUser.dto';
 import * as bcrypt from 'bcrypt';
+import { UserSession } from './user-session.entity';
 
 @Injectable()
 export class UserService {
   constructor(@InjectRepository(User) 
-                private usersRepository: Repository<User>
-            ) {}
+                private usersRepository: Repository<User>,
+              @InjectRepository(UserSession)
+                private sessionRepo: Repository<UserSession>,
+              ) {}
 
   findAll(): Promise<User[]> {
     return this.usersRepository.find();
   }
 
-  findOneById(id: number): Promise<User | null> {
+  findOneById(id: string): Promise<User | null> {
     return this.usersRepository.findOneBy({ id });
   }
 
@@ -28,7 +31,7 @@ export class UserService {
     return this.usersRepository.save(user);
   }
   
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     await this.usersRepository.delete(id);
   }
 
@@ -43,7 +46,25 @@ export class UserService {
     return 'utilisateur : ' + createUserDto.firstName + ' ' + createUserDto.lastName + ' cree avec succes';
   }
 
-}
+  async createSession(data: Partial<UserSession>): Promise<void> {
+    const session = this.sessionRepo.create(data);
+    await this.sessionRepo.save(session);
+  }
 
+  async findAllSession(): Promise<UserSession[]> {
+    return this.sessionRepo.find();
+  }
 
+  async findSession(userId: string, refreshTokenId: string): Promise<UserSession | null> {
+    return this.sessionRepo.findOneBy({ userId, refreshTokenId });
+  }
+
+  async deleteSession(userId: string, deviceId: string): Promise<void> {
+    await this.sessionRepo.delete({ userId, deviceId });
+  }
   
+  async deleteAllSessions(userId: string): Promise<void> {
+    await this.sessionRepo.delete({ userId });
+  }
+  
+}

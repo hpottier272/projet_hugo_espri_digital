@@ -70,36 +70,45 @@ export class AuthService {
     }
   }
 
-  async logout(userName: string): Promise<ResponseDto<null>> {
+  async logout(userName: string, deviceId?: string): Promise<ResponseDto<null>> {
     const user = await this.searchUserByUserName(userName);
     if (!user) {
       return { statusCode: 404, message: 'Utilisateur non trouvé.' };
     }
-    user.accessTokenId = '';
-    user.accessToken = '';
-    user.refreshToken = '';
-    await this.usersService.save(user);
+  
+    if (deviceId) {
+      await this.usersService.deleteSession(user.id, deviceId);
+    } else {
+      await this.usersService.deleteAllSessions(user.id);
+    }
+  
     return { statusCode: 200, message: 'Déconnexion réussie.' };
   }
+  
 
-  async refresh(token: TokensDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
-    console.log("message 0");
+
+  async refresh(token: TokensDto, ip?: string, deviceId?: string): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
     try {
       const payload = await this.jwtService.verifyAsync(token.refreshToken, { secret: jwtConstants.refreshSecret });
-      console.log("message 1");
-      const user = await this.usersService.findOneById(payload.sub);
-      console.log("message 2");
+      const refreshTokenId = payload.jti;
+      const userId = payload.sub;
+      const session = await this.usersService.findSession(userId, refreshTokenId);
+      if (!session) {
+        return { statusCode: 403, message: 'Session introuvable.' };
+      }
+
+      const user = await this.usersService.findOneById(userId);
       if (!user || !user.refreshToken) {
         return { statusCode: 403, message: 'Accès refusé.' };
       }
   
-      const isMatch = await bcrypt.compare(token.refreshToken, user.refreshToken);
+      const isMatch = await bcrypt.compare(token.refreshToken,  session.hashedRefreshToken);
       if (!isMatch) {
         return { statusCode: 403, message: 'Token de rafraîchissement invalide.' };
       }
   
       const newAccessToken = await this.generateAccessToken(user);
-      const newRefreshToken = await this.generateRefreshToken(user);
+      const newRefreshToken = await this.generateRefreshToken(user, deviceId, ip);
       await this.saveSecureAccessToken(user, newAccessToken);
       await this.saveSecureRefreshToken(user, newRefreshToken);
       return {
@@ -132,11 +141,22 @@ export class AuthService {
     return token;
   }
   
-  private async generateRefreshToken(user: User): Promise<string> {
-    return this.jwtService.signAsync(
-      { sub: user.id },
-      { secret: jwtConstants.refreshSecret, expiresIn: '7d' }
+  private async generateRefreshToken(user: User, deviceId?: string, ip?: string): Promise<string> {
+    const refreshTokenId = crypto.randomUUID();
+    const refreshToken = await this.jwtService.signAsync(
+      { sub: user.id, jti: refreshTokenId },
+      { secret: jwtConstants.refreshSecret, expiresIn: '7d' },
     );
+  
+    const hashed = await bcrypt.hash(refreshToken, 10);
+    await this.usersService.createSession({
+      userId: user.id,
+      refreshTokenId,
+      hashedRefreshToken: hashed,
+      deviceId,
+      ip,
+    });
+    return refreshToken;
   }
   
   private async generateCode() : Promise<number>{

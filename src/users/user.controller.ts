@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post,Delete } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/createUser.dto';
+import { UserSession } from './user-session.entity';
 
 @Controller('user/')
 export class UserController {
@@ -11,9 +12,14 @@ export class UserController {
         getall(): Promise<User[]> {
             return this.userService.findAll();
         }
+
+    @Get('session')
+        getallsession(): Promise<UserSession[]> {
+            return this.userService.findAllSession();
+        }
     
     @Get(':id')
-        findOne(@Param('id') id: number) {
+        findOne(@Param('id') id: string) {
             return this.userService.findOneById(id);
         }
 
@@ -23,7 +29,7 @@ export class UserController {
         }
 
     @Delete()
-        async remove(@Body() id: number) {
+        async remove(@Body() id: string) {
             return this.userService.remove(id);
         }
 
