@@ -83,9 +83,12 @@ export class AuthService {
   }
 
   async refresh(token: TokensDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
+    console.log("message 0");
     try {
       const payload = await this.jwtService.verifyAsync(token.refreshToken, { secret: jwtConstants.refreshSecret });
+      console.log("message 1");
       const user = await this.usersService.findOneById(payload.sub);
+      console.log("message 2");
       if (!user || !user.refreshToken) {
         return { statusCode: 403, message: 'Accès refusé.' };
       }
