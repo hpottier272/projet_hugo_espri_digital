@@ -24,8 +24,11 @@ export class User {
   @Column({default: null})
   codeTempo:string;
 
+  @Column({default:null})
+  accessTokenId: string;
+
   @Column({default: null})
-  token: string;
+  accessToken: string;
 
   @Column({default: null})
   refreshToken: string;

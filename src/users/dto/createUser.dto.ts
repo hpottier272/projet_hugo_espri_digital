@@ -5,7 +5,8 @@ export class CreateUserDto {
     password: string;
     tel: string;
     codeTempo:string;
-    token: string;
+    accessTokenId: string;
+    accessToken: string;
     refreshToken: string;
     mail: string;
   }

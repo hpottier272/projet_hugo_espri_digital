@@ -36,13 +36,13 @@ export class AuthGuard implements CanActivate {
       try {
         const payload = await this.jwtService.verifyAsync(token, {secret: jwtConstants.secret });
         const user = await this.usersService.findOneById(payload.sub);
-        if (user == null){
+        if (!user){
           response.status(401).json({ statusCode: 401, message: 'utilisateur inconnu' });
           return false;
         }
-        const isTokenValid = await bcrypt.compare(token, user.token);
-        if (!isTokenValid) {
-          response.status(401).json({ statusCode: 401, message: 'Token non valide (ancienne session).' });
+
+        if (payload.jti !== user.accessTokenId) {
+          response.status(401).json({ statusCode: 401, message: 'Token invalide (session révoquée).' });
           return false;
         }
         request['user'] = payload;

@@ -7,6 +7,7 @@ import { HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseDto } from './dto/response.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { TokensDto } from './dto/token.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -130,8 +131,8 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body() { refreshToken }: { refreshToken: string }): Promise<ResponseDto<{ accessToken: string }>> {
-    return this.authService.refresh(refreshToken);
+  async refresh(@Body() tokensDto : TokensDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
+    return this.authService.refresh(tokensDto);
   }
 
 }
