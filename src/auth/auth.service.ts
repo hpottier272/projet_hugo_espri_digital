@@ -21,6 +21,11 @@ export class AuthService {
     return 'Bienvenue sur l’interface d’authentification';
   }
 
+  async clean(userId: string) {
+    await this.usersService.deleteAllSessions(userId);
+    return { statusCode: 200, message: 'ok c bon' };
+  }
+
   async signInPassAuth(userName: string, password: string): Promise<ResponseDto<null>> {
     try {
       const user = await this.searchUserByUserName(userName);
@@ -56,6 +61,8 @@ export class AuthService {
       const refreshToken = await this.generateRefreshToken(user);
       await this.saveSecureRefreshToken(user, refreshToken);
       await this.saveSecureAccessToken(user, accessToken);
+      await this.generateSession(user,accessToken,refreshToken);
+
       return {
         statusCode: 200,
         message: 'Connexion réussie',
@@ -70,23 +77,23 @@ export class AuthService {
     }
   }
 
-  async logout(userName: string, deviceId?: string): Promise<ResponseDto<null>> {
-    const user = await this.searchUserByUserName(userName);
-    if (!user) {
+  async logout(token:TokensDto): Promise<ResponseDto<null>> {
+    const payload = await this.jwtService.verifyAsync(token.refreshToken, { secret: jwtConstants.refreshSecret });
+    const refreshTokenId = payload.jti;
+    const userId = payload.sub;
+    const session = await this.usersService.findSession(userId, refreshTokenId);
+    if (!userId) {
       return { statusCode: 404, message: 'Utilisateur non trouvé.' };
     }
-  
-    if (deviceId) {
-      await this.usersService.deleteSession(user.id, deviceId);
-    } else {
-      await this.usersService.deleteAllSessions(user.id);
+    if (session){
+    await this.usersService.deleteSession(userId, session.refreshTokenId);
     }
-  
+    else{
+      return { statusCode: 404, message: 'Session introuvable.' };
+    }
     return { statusCode: 200, message: 'Déconnexion réussie.' };
   }
   
-
-
   async refresh(token: TokensDto, ip?: string, deviceId?: string): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
     try {
       const payload = await this.jwtService.verifyAsync(token.refreshToken, { secret: jwtConstants.refreshSecret });
@@ -98,7 +105,7 @@ export class AuthService {
       }
 
       const user = await this.usersService.findOneById(userId);
-      if (!user || !user.refreshToken) {
+      if (!user || !session.AccessTokenId) {
         return { statusCode: 403, message: 'Accès refusé.' };
       }
   
@@ -108,9 +115,11 @@ export class AuthService {
       }
   
       const newAccessToken = await this.generateAccessToken(user);
-      const newRefreshToken = await this.generateRefreshToken(user, deviceId, ip);
+      const newRefreshToken = await this.generateRefreshToken(user);
       await this.saveSecureAccessToken(user, newAccessToken);
       await this.saveSecureRefreshToken(user, newRefreshToken);
+      await this.generateSession(userId,newAccessToken,newRefreshToken);
+      await this.usersService.deleteSession(userId,session.refreshTokenId);
       return {
         statusCode: 200,
         message: 'Nouveau token généré.',
@@ -141,22 +150,29 @@ export class AuthService {
     return token;
   }
   
-  private async generateRefreshToken(user: User, deviceId?: string, ip?: string): Promise<string> {
+  private async generateRefreshToken(user: User): Promise<string> {
     const refreshTokenId = crypto.randomUUID();
     const refreshToken = await this.jwtService.signAsync(
       { sub: user.id, jti: refreshTokenId },
       { secret: jwtConstants.refreshSecret, expiresIn: '7d' },
     );
-  
-    const hashed = await bcrypt.hash(refreshToken, 10);
+    user.refreshTokenId = refreshTokenId;
+    await this.usersService.save(user);
+    return refreshToken;
+  }
+
+  private async generateSession(user : User, accessToken : string, refreshToken : string, deviceId?: string, ip?: string) {
+    const hashedAccessToken = await bcrypt.hash(accessToken, 10);
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
     await this.usersService.createSession({
       userId: user.id,
-      refreshTokenId,
-      hashedRefreshToken: hashed,
+      AccessTokenId : user.accessTokenId,
+      hashedAccessToken : hashedAccessToken,
+      refreshTokenId : user.refreshTokenId,
+      hashedRefreshToken: hashedRefreshToken,
       deviceId,
       ip,
     });
-    return refreshToken;
   }
   
   private async generateCode() : Promise<number>{

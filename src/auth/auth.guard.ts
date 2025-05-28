@@ -40,8 +40,12 @@ export class AuthGuard implements CanActivate {
           response.status(401).json({ statusCode: 401, message: 'utilisateur inconnu' });
           return false;
         }
-
-        if (payload.jti !== user.accessTokenId) {
+        const session = await this.usersService.findSession(user.id,user.refreshTokenId)
+        if (!session){
+          response.status(401).json({ statusCode: 401, message: 'pas de session pour cet utilisateur avec ce refresh token' });
+          return false;
+        }
+        if (payload.jti !== session.AccessTokenId) {
           response.status(401).json({ statusCode: 401, message: 'Token invalide (session révoquée).' });
           return false;
         }

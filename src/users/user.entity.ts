@@ -31,6 +31,9 @@ export class User {
   accessToken: string;
 
   @Column({default: null})
+  refreshTokenId: string;
+
+  @Column({default: null})
   refreshToken: string;
 
   @Column()

@@ -9,6 +9,12 @@ export class UserSession {
   userId: string;
 
   @Column()
+  AccessTokenId: string;
+
+  @Column()
+  hashedAccessToken: string;
+
+  @Column()
   refreshTokenId: string;
 
   @Column()

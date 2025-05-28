@@ -59,8 +59,8 @@ export class UserService {
     return this.sessionRepo.findOneBy({ userId, refreshTokenId });
   }
 
-  async deleteSession(userId: string, deviceId: string): Promise<void> {
-    await this.sessionRepo.delete({ userId, deviceId });
+  async deleteSession(userId: string, refreshTokenId: string): Promise<void> {
+    await this.sessionRepo.delete({ userId, refreshTokenId });
   }
   
   async deleteAllSessions(userId: string): Promise<void> {

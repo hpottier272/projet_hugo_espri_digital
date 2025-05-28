@@ -1,12 +1,10 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInPassAuthDto } from './dto/signInPassAuth.dto';
 import { SignInCodeAuthDto } from './dto/signInCodeAuth.dto';
 import { Public } from './public.decorateur';
-import { HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
 import { ResponseDto } from './dto/response.dto';
-import { LogoutDto } from './dto/logout.dto';
 import { TokensDto } from './dto/token.dto';
 
 @ApiTags('Auth')
@@ -36,6 +34,7 @@ export class AuthController {
   @Post('login/password')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Authentification par mot de passe' })
+  @ApiBody({ type: SignInPassAuthDto })
   @ApiResponse({
     status: 201,
     description: 'Code envoyé par mail.',
@@ -66,14 +65,15 @@ export class AuthController {
       },
     },
   })
-  async signInPassAuth(@Body() signInPassAuthDto: SignInPassAuthDto): Promise<ResponseDto<null>> {
-    return this.authService.signInPassAuth(signInPassAuthDto.userName, signInPassAuthDto.password);
+  async signInPassAuth(@Body() dto: SignInPassAuthDto): Promise<ResponseDto<null>> {
+    return this.authService.signInPassAuth(dto.userName, dto.password);
   }
 
   @Public()
   @Post('login/code')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Authentification avec code' })
+  @ApiBody({ type: SignInCodeAuthDto })
   @ApiResponse({
     status: 200,
     description: 'Connexion réussie',
@@ -82,7 +82,8 @@ export class AuthController {
         statusCode: 200,
         message: 'Connexion réussie',
         data: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         },
       },
     },
@@ -107,13 +108,14 @@ export class AuthController {
       },
     },
   })
-  async signInCodeAuth(@Body() signInCodeAuthDto: SignInCodeAuthDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
-    return this.authService.signInCodeAuth(signInCodeAuthDto.userName, signInCodeAuthDto.code);
+  async signInCodeAuth(@Body() dto: SignInCodeAuthDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
+    return this.authService.signInCodeAuth(dto.userName, dto.code);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Déconnexion' })
+  @ApiBody({ type: TokensDto })
   @ApiResponse({
     status: 200,
     description: 'Déconnexion réussie',
@@ -124,15 +126,55 @@ export class AuthController {
       },
     },
   })
-  async logout(@Body() logoutdto : LogoutDto): Promise<ResponseDto<null>> {
-    return this.authService.logout(logoutdto.userName);
+  @ApiResponse({
+    status: 500,
+    description: 'Erreur serveur lors de la déconnexion.',
+    schema: {
+      example: {
+        statusCode: 500,
+        message: 'Erreur serveur lors de la déconnexion.',
+      },
+    },
+  })
+  async logout(@Body() tokendto: TokensDto): Promise<ResponseDto<null>> {
+    return this.authService.logout(tokendto);
   }
-
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body() tokensDto : TokensDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
-    return this.authService.refresh(tokensDto);
+  @ApiOperation({ summary: 'Rafraîchir le token' })
+  @ApiBody({ type: TokensDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Nouveaux tokens générés',
+    schema: {
+      example: {
+        statusCode: 200,
+        message: 'Nouveau token généré.',
+        data: {
+          accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Erreur interne lors du rafraîchissement du token.',
+    schema: {
+      example: {
+        statusCode: 500,
+        message: 'Erreur interne lors du rafraîchissement du token.',
+      },
+    },
+  })  
+  async refresh(@Body() dto: TokensDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
+    return this.authService.refresh(dto);
+  }
+  @Public()
+  @Post('clean')
+  async clean(@Body() userid:string) : Promise<ResponseDto<null>>{
+    return this.authService.clean(userid);
   }
 
 }
