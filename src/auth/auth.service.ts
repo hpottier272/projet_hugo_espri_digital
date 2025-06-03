@@ -198,3 +198,38 @@ export class AuthService {
   }
 
 }
+
+
+
+
+
+
+/*
+
+
+// auth.service.ts
+import { JwtService } from '@nestjs/jwt';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AuthService {
+  constructor(private jwtService: JwtService) {}
+
+  async login(user: any, res: any) {
+    const payload = { sub: user.id, email: user.email };
+    const token = await this.jwtService.signAsync(payload);
+
+    res.cookie('jwt', token, {
+      httpOnly: true,
+      secure: true, // en prod : https obligatoire
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    return { message: 'Logged in' };
+  }
+}
+
+
+
+*/

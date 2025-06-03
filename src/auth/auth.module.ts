@@ -1,11 +1,12 @@
 
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../users/user.module';
 import { MailModule } from 'src/mail/mail.module';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Module({
   imports: [
@@ -13,8 +14,12 @@ import { MailModule } from 'src/mail/mail.module';
     MailModule,
     JwtModule.register({
       global: true,
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '5m' },
+      privateKey: fs.readFileSync(path.join(__dirname, '../../keys/private.key')),
+      publicKey: fs.readFileSync(path.join(__dirname, '../../keys/public.key')),
+      signOptions: {
+        algorithm: 'RS256',
+        expiresIn: '15m',
+      },
     }),
   ],
   providers: [AuthService],
