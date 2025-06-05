@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpCode, HttpStatus,Res,Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInPassAuthDto } from './dto/signInPassAuth.dto';
 import { SignInCodeAuthDto } from './dto/signInCodeAuth.dto';
@@ -6,6 +6,7 @@ import { Public } from './public.decorateur';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
 import { ResponseDto } from './dto/response.dto';
 import { TokensDto } from './dto/token.dto';
+import { Response, Request  } from 'express';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -108,8 +109,8 @@ export class AuthController {
       },
     },
   })
-  async signInCodeAuth(@Body() dto: SignInCodeAuthDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
-    return this.authService.signInCodeAuth(dto.userName, dto.code);
+  async signInCodeAuth(@Body() dto: SignInCodeAuthDto, @Res({ passthrough: true }) res: Response): Promise<ResponseDto<null>> {
+    return this.authService.signInCodeAuth(dto.userName, dto.code, res);
   }
 
   @Post('logout')
@@ -136,8 +137,20 @@ export class AuthController {
       },
     },
   })
-  async logout(@Body() tokendto: TokensDto): Promise<ResponseDto<null>> {
-    return this.authService.logout(tokendto);
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<ResponseDto<null>> {
+    const refreshToken = req.cookies?.refresh;
+    const result = this.authService.logout(refreshToken);
+    res.clearCookie('jwt', {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: false,
+    });
+    res.clearCookie('refresh', {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: false,
+    });
+    return result;
   }
 
   @Post('refresh')
@@ -171,6 +184,8 @@ export class AuthController {
   async refresh(@Body() dto: TokensDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
     return this.authService.refresh(dto);
   }
+
+
   @Public()
   @Post('clean')
   async clean(@Body() userid:string) : Promise<ResponseDto<null>>{

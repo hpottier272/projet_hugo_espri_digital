@@ -3,9 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request, Response} from 'express';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './public.decorateur';
-import { jwtConstants } from './constants';
 import { UserService } from 'src/users/user.service';
-import * as bcrypt from 'bcrypt';
   
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -25,28 +23,23 @@ export class AuthGuard implements CanActivate {
       }
   
       const request = context.switchToHttp().getRequest<Request>();
-      const token = this.extractTokenFromHeader(request);
       const response = context.switchToHttp().getResponse<Response>();
-      
+      const token = request.cookies?.jwt;
       if (!token) {
-        response.status(401).json({ statusCode: 401, message: 'Authentification requise.' });
+        response.status(401).json({ statusCode: 401, message: 'Authentification requise' });
         return false;
       }
 
       try {
-        const payload = await this.jwtService.verifyAsync(token, {secret: jwtConstants.secret });
+        const payload = await this.jwtService.verifyAsync(token);
         const user = await this.usersService.findOneById(payload.sub);
         if (!user){
           response.status(401).json({ statusCode: 401, message: 'utilisateur inconnu' });
           return false;
         }
-        const session = await this.usersService.findSession(user.id,user.refreshTokenId)
+        const session = await this.usersService.findSession(user.id,payload.jti)
         if (!session){
-          response.status(401).json({ statusCode: 401, message: 'pas de session pour cet utilisateur avec ce refresh token' });
-          return false;
-        }
-        if (payload.jti !== session.AccessTokenId) {
-          response.status(401).json({ statusCode: 401, message: 'Token invalide (session révoquée).' });
+          response.status(401).json({ statusCode: 401, message: 'pas de session pour cet utilisateur avec ce token' });
           return false;
         }
         request['user'] = payload;
@@ -56,40 +49,4 @@ export class AuthGuard implements CanActivate {
       }
       return true;
     }
-
-    private extractTokenFromHeader(request: Request): string | undefined {
-      const [type, token] = request.headers.authorization?.split(' ') ?? [];
-      return type === 'Bearer' ? token : undefined;
-    }
-  }
-
-
-
-  /*
-
-// jwt-auth.guard.ts
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-
-@Injectable()
-export class JwtAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-
-    const token = request.cookies?.jwt;
-    if (!token) return false;
-
-    try {
-      const payload = await this.jwtService.verifyAsync(token);
-      request.user = payload;
-      return true;
-    } catch {
-      return false;
-    }
-  }
 }
-
-
-  */

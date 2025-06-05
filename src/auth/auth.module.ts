@@ -14,8 +14,8 @@ import * as path from 'path';
     MailModule,
     JwtModule.register({
       global: true,
-      privateKey: fs.readFileSync(path.join(__dirname, '../../keys/private.key')),
-      publicKey: fs.readFileSync(path.join(__dirname, '../../keys/public.key')),
+      privateKey: fs.readFileSync(path.join(__dirname, '../../src/keys/private.key')),
+      publicKey: fs.readFileSync(path.join(__dirname, '../../src/keys/public.key')),
       signOptions: {
         algorithm: 'RS256',
         expiresIn: '15m',
