@@ -32,12 +32,11 @@ export class AuthGuard implements CanActivate {
 
       try {
         const payload = await this.jwtService.verifyAsync(token);
-        const user = await this.usersService.findOneById(payload.sub);
-        if (!user){
+        if (!payload){
           response.status(401).json({ statusCode: 401, message: 'utilisateur inconnu' });
           return false;
         }
-        const session = await this.usersService.findSession(user.id,payload.jti)
+        const session = await this.usersService.findSession(payload.sub,payload.jti)
         if (!session){
           response.status(401).json({ statusCode: 401, message: 'pas de session pour cet utilisateur avec ce token' });
           return false;

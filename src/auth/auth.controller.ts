@@ -138,8 +138,8 @@ export class AuthController {
     },
   })
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<ResponseDto<null>> {
-    const refreshToken = req.cookies?.refresh;
-    const result = this.authService.logout(refreshToken);
+    const accessToken = req.cookies?.jwt;
+    const result = this.authService.logout(accessToken);
     res.clearCookie('jwt', {
       httpOnly: true,
       sameSite: 'strict',

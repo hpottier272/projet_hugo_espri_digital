@@ -9,7 +9,7 @@ export class UserSession {
   userId: string;
 
   @Column()
-  AccessTokenId: string;
+  accessTokenId: string;
 
   @Column()
   hashedAccessToken: string;
