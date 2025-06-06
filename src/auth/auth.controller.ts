@@ -181,8 +181,28 @@ export class AuthController {
       },
     },
   })  
-  async refresh(@Body() dto: TokensDto): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
-    return this.authService.refresh(dto);
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
+    const refreshToken = req.cookies?.refresh;
+    const result = await this.authService.refresh(refreshToken);
+      
+    if (!result.data) {
+      return result;
+    }
+
+    res.cookie('jwt', result.data.accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refresh', result.data.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return result;
   }
 
 

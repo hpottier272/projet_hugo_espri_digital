@@ -64,7 +64,7 @@ export class UserService {
   }
   
   async deleteAllSessions(userId: string): Promise<void> {
-    await this.sessionRepo.delete({ userId });
+    await this.sessionRepo.delete({userId});
   }
   
 }

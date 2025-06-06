@@ -106,20 +106,18 @@ export class AuthService {
     if (!userId) {
       return { statusCode: 404, message: 'Utilisateur non trouvé.' };
     }
-  
     const session = await this.usersService.findSession(userId, accessTokenId);
     if (!session) {
       return { statusCode: 404, message: 'Session introuvable.' };
     }
-  
-    await this.usersService.deleteSession(userId, accessTokenId);
+    await this.usersService.deleteSession(userId,accessTokenId);
   
     return { statusCode: 200, message: 'Déconnexion réussie.' };
   }
   
-  async refresh(token: TokensDto, ip?: string, deviceId?: string): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
+  async refresh(refreshToken: string): Promise<ResponseDto<{ accessToken: string, refreshToken: string }>> {
     try {
-      const payload = await this.jwtService.verifyAsync(token.refreshToken, { secret: jwtConstants.refreshSecret });
+      const payload = await this.jwtService.verifyAsync(refreshToken);
       const refreshTokenId = payload.jti;
       const userId = payload.sub;
       const session = await this.usersService.findSession(userId, refreshTokenId);
@@ -128,11 +126,11 @@ export class AuthService {
       }
 
       const user = await this.usersService.findOneById(userId);
-      if (!user || !session.accessTokenId) {
-        return { statusCode: 403, message: 'Accès refusé.' };
+      if (!user) {
+        return { statusCode: 403, message: 'Utilisateur non trouvé' };
       }
   
-      const isMatch = await bcrypt.compare(token.refreshToken,  session.hashedRefreshToken);
+      const isMatch = await bcrypt.compare(refreshToken, session.hashedRefreshToken);
       if (!isMatch) {
         return { statusCode: 403, message: 'Token de rafraîchissement invalide.' };
       }
@@ -140,11 +138,14 @@ export class AuthService {
       const newAccessToken = await this.generateAccessToken(user);
       const newRefreshToken = await this.generateRefreshToken(user);
       await this.generateSession(newAccessToken,newRefreshToken);
-      await this.usersService.deleteSession(userId,session.refreshTokenId);
+      await this.usersService.deleteSession(userId,refreshTokenId);
       return {
         statusCode: 200,
-        message: 'Nouveau token généré.',
-        data: { accessToken: newAccessToken, refreshToken: newRefreshToken, },
+        message: 'Nouveau token généré.', 
+        data:{
+          accessToken : newAccessToken, 
+          refreshToken: newRefreshToken
+        }
       };
     } catch (e) {
       return { statusCode: 403, message: 'Token invalide ou expiré.' };
