@@ -106,11 +106,11 @@ export class AuthService {
     if (!userId) {
       return { statusCode: 404, message: 'Utilisateur non trouvé.' };
     }
-    const session = await this.usersService.findSession(userId, accessTokenId);
+    const session = await this.usersService.findSessionByAccess(userId, accessTokenId);
     if (!session) {
       return { statusCode: 404, message: 'Session introuvable.' };
     }
-    await this.usersService.deleteSession(userId,accessTokenId);
+    await this.usersService.deleteAllSessions(userId);
   
     return { statusCode: 200, message: 'Déconnexion réussie.' };
   }
@@ -120,7 +120,8 @@ export class AuthService {
       const payload = await this.jwtService.verifyAsync(refreshToken);
       const refreshTokenId = payload.jti;
       const userId = payload.sub;
-      const session = await this.usersService.findSession(userId, refreshTokenId);
+      console.log(refreshTokenId+' : '+ userId);
+      const session = await this.usersService.findSessionByRefresh(userId, refreshTokenId);
       if (!session) {
         return { statusCode: 403, message: 'Session introuvable.' };
       }
@@ -137,8 +138,9 @@ export class AuthService {
   
       const newAccessToken = await this.generateAccessToken(user);
       const newRefreshToken = await this.generateRefreshToken(user);
-      await this.generateSession(newAccessToken,newRefreshToken);
       await this.usersService.deleteSession(userId,refreshTokenId);
+      await this.generateSession(newAccessToken,newRefreshToken);
+      
       return {
         statusCode: 200,
         message: 'Nouveau token généré.', 

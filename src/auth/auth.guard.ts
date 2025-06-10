@@ -36,7 +36,7 @@ export class AuthGuard implements CanActivate {
           response.status(401).json({ statusCode: 401, message: 'utilisateur inconnu' });
           return false;
         }
-        const session = await this.usersService.findSession(payload.sub,payload.jti)
+        const session = await this.usersService.findSessionByAccess(payload.sub,payload.jti)
         if (!session){
           response.status(401).json({ statusCode: 401, message: 'pas de session pour cet utilisateur avec ce token' });
           return false;

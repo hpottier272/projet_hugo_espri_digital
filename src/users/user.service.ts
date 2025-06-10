@@ -55,8 +55,12 @@ export class UserService {
     return this.sessionRepo.find();
   }
 
-  async findSession(userId: string, accessTokenId: string): Promise<UserSession | null> {
+  async findSessionByAccess(userId: string, accessTokenId: string): Promise<UserSession | null> {
     return this.sessionRepo.findOneBy({ userId, accessTokenId });
+  }
+
+  async findSessionByRefresh(userId: string, refreshTokenId: string): Promise<UserSession | null> {
+    return this.sessionRepo.findOneBy({ userId, refreshTokenId });
   }
 
   async deleteSession(userId: string, accessTokenId: string): Promise<void> {
