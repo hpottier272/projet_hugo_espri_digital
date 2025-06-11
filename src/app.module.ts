@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController} from './app.controller';
-import { AppService } from './app.service';
 import { AuthentificationModule } from './decouverte/decouverte.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -29,8 +27,7 @@ import { AuthGuard } from './auth/auth.guard';
     }),
     AuthModule, 
   ],
-  controllers: [AppController],
-  providers: [AppService, {provide: APP_GUARD,useClass: AuthGuard}],
+  providers: [{provide: APP_GUARD,useClass: AuthGuard}],
 })
 export class AppModule {
   constructor(private dataSource: DataSource) {}

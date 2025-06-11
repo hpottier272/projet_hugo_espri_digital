@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param} from '@nestjs/common';
 import { DecouverteService } from './decouverte.service';
-import { CreateUserDto } from './dto/createUser.dto';
+import { CreateUserDecouverteDto } from './dto/createUserDecouverte.dto';
 
 @Controller('decouverte/')
 export class DecouverteController {
@@ -17,7 +17,7 @@ export class DecouverteController {
   }
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<string> {
+  async create(@Body() createUserDto: CreateUserDecouverteDto): Promise<string> {
     return this.decouverteService.postAuth(createUserDto);
   }
 

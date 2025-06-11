@@ -6,8 +6,6 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/user.entity';
 import { MailService } from 'src/mail/mail.service';
 import { ResponseDto } from './dto/response.dto';
-import { jwtConstants } from './constants';
-import { TokensDto } from './dto/token.dto';
 import { Response } from 'express';
 
 @Injectable()
@@ -122,23 +120,23 @@ export class AuthService {
       const userId = payload.sub;
       console.log(refreshTokenId+' : '+ userId);
       const session = await this.usersService.findSessionByRefresh(userId, refreshTokenId);
-      if (!session) {
+      if (!session.data) {
         return { statusCode: 403, message: 'Session introuvable.' };
       }
 
       const user = await this.usersService.findOneById(userId);
-      if (!user) {
+      if (!user.data) {
         return { statusCode: 403, message: 'Utilisateur non trouvé' };
       }
   
-      const isMatch = await bcrypt.compare(refreshToken, session.hashedRefreshToken);
+      const isMatch = await bcrypt.compare(refreshToken, session.data.hashedRefreshToken);
       if (!isMatch) {
         return { statusCode: 403, message: 'Token de rafraîchissement invalide.' };
       }
   
-      const newAccessToken = await this.generateAccessToken(user);
-      const newRefreshToken = await this.generateRefreshToken(user);
-      await this.usersService.deleteSession(userId,refreshTokenId);
+      const newAccessToken = await this.generateAccessToken(user.data);
+      const newRefreshToken = await this.generateRefreshToken(user.data);
+      await this.usersService.deleteSession(userId,session.data.accessTokenId);
       await this.generateSession(newAccessToken,newRefreshToken);
       
       return {
@@ -155,7 +153,11 @@ export class AuthService {
   }
 
   private async searchUserByUserName(userName: string): Promise<User|null> {
-    return this.usersService.findOneByuserName(userName);
+    const result = await this.usersService.findOneByUsername(userName);
+    if (!result.data){
+      return null;
+    }
+    return result.data;
   }
 
   private async checkPassword(user: User, password: string): Promise<boolean> {

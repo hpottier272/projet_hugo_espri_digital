@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/createUser.dto';
+import { CreateUserDecouverteDto } from './dto/createUserDecouverte.dto';
 
 @Injectable()
 export class DecouverteService {
@@ -11,7 +11,7 @@ export class DecouverteService {
     return 'bonjour, ' + name + ' ravi de vous revoir ';
   }
 
-  postAuth(createUserDto: CreateUserDto): string {
+  postAuth(createUserDto: CreateUserDecouverteDto): string {
     return 'bonjour, ' + createUserDto.userName + ' '+ createUserDto.password;
   }
   

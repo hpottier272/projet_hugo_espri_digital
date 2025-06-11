@@ -5,7 +5,6 @@ import { SignInCodeAuthDto } from './dto/signInCodeAuth.dto';
 import { Public } from './public.decorateur';
 import { ApiOperation, ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
 import { ResponseDto } from './dto/response.dto';
-import { TokensDto } from './dto/token.dto';
 import { Response, Request  } from 'express';
 
 @ApiTags('Auth')
@@ -116,7 +115,6 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Déconnexion' })
-  @ApiBody({ type: TokensDto })
   @ApiResponse({
     status: 200,
     description: 'Déconnexion réussie',
@@ -156,7 +154,6 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Rafraîchir le token' })
-  @ApiBody({ type: TokensDto })
   @ApiResponse({
     status: 200,
     description: 'Nouveaux tokens générés',
